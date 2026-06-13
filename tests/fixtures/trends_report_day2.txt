@@ -1,0 +1,6 @@
+=== UniFi Audit Report 2026-05-15 ===
+Total devices: 271
+Online: 269
+Offline: 2
+PoE total: 460W / 720W (63.9%)
+Critical issues: 0

@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-type:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: No CRLF in tracked text
+        run: |
+          if git ls-files -z 'scripts/**' 'src/**' 'tests/**' 'docs/**' '*.sh' '*.py' \
+             | xargs -0 grep -lIP '\r$' ; then
+            echo "::error::CRLF found in tracked text files (see list above)"; exit 1
+          fi
+      - name: Ruff check
+        run: ruff check .
+      - name: Ruff format check
+        run: ruff format --check .
+      - name: Mypy strict (core)
+        # Phase 2: settings, logging_config, clients, domain, utils, services, integrations.
+        # diagnostics добавится в Phase 4.
+        run: |
+          mypy --strict \
+            src/unifi_manager/settings.py \
+            src/unifi_manager/logging_config.py \
+            src/unifi_manager/clients \
+            src/unifi_manager/domain \
+            src/unifi_manager/utils \
+            src/unifi_manager/services \
+            src/unifi_manager/integrations
+      - name: Mypy (rest)
+        run: mypy src/unifi_manager
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Pytest
+        run: pytest --cov=unifi_manager --cov-report=term-missing --cov-fail-under=80
+
+  build:
+    needs: [lint-type, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build
+        run: pip install build
+      - name: Build wheel
+        run: python -m build
+      # No upload-artifact: self-hosted Forgejo Actions has no artifact backend
+      # (upload-artifact@v4 fails). Release artifacts are built via
+      # scripts/build-bundle.py + published with scripts/forgejo_release.py.

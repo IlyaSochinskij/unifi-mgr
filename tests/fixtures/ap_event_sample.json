@@ -1,0 +1,26 @@
+{
+  "meta": {"rc": "ok"},
+  "data": [
+    {
+      "_id": "evt-uuid-1",
+      "key": "EVT_AP_Lost_Contact",
+      "datetime": "2026-05-15T22:00:00Z",
+      "ap": "aa:bb:cc:dd:ee:01",
+      "ap_name": "Restoran",
+      "msg": "AP[aa:bb:cc:dd:ee:01] was disconnected"
+    },
+    {
+      "_id": "evt-uuid-2",
+      "key": "EVT_AP_Connected",
+      "datetime": "2026-05-15T22:05:00Z",
+      "ap": "aa:bb:cc:dd:ee:01",
+      "ap_name": "Restoran"
+    },
+    {
+      "_id": "evt-uuid-3",
+      "key": "EVT_AP_Disconnected",
+      "datetime": "2026-05-15T23:00:00Z",
+      "ap": "aa:bb:cc:dd:ee:01"
+    }
+  ]
+}

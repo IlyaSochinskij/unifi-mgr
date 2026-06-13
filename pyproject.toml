@@ -1,0 +1,147 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unifi-mgr"
+version = "0.1.7"
+description = "UniFi network management toolkit for production networks"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Ilya Sochinskij", email = "ilya.sochinskij2002@gmail.com"}]
+
+# Верхние границы по мажорам: deploy.sh резолвит deps из PyPI на сервере, и без
+# cap следующий pydantic 3 / typer 1 молча сломал бы прод-деплой (D1/DP1).
+dependencies = [
+    "typer>=0.12,<1",
+    "pydantic>=2.7,<3",
+    "pydantic-settings>=2.3,<3",
+    "requests>=2.32,<3",
+    "rich>=13.7,<16",
+    "pyyaml>=6.0,<7",
+    "fasteners>=0.19,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "pytest-mock>=3.12",
+    "pytest-xdist>=3.5",
+    "responses>=0.25",
+    "freezegun>=1.5",
+    "hypothesis>=6.100",
+    "ruff==0.15.13",
+    "mypy>=1.10",
+    "types-requests>=2.32",
+    "types-pyyaml>=6.0",
+    "pre-commit>=3.7",
+]
+
+[project.scripts]
+unifi-mgr = "unifi_manager.cli.main:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+unifi_manager = ["py.typed"]
+
+# === Ruff ===
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+# pre-commit tool cache (local dev artifact, not present on CI)
+exclude = [".pre-commit-cache"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",
+    "I",
+    "B",
+    "UP",
+    "SIM",
+    "RUF",
+    "C4",
+    "PT",
+    "RET",
+    "TID",
+]
+ignore = [
+    "E501",
+]
+
+[tool.ruff.lint.flake8-pytest-style]
+# Repo convention (and the pinned pre-commit ruff v0.15.13) uses @pytest.fixture()
+# WITH parens. Pin it explicitly so the newer dev/CI ruff agrees instead of
+# fighting the hook over PT001 (default flipped to no-parens in later ruff).
+fixture-parentheses = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["B011", "RUF002", "RUF003", "PT006", "PT023", "SIM117"]
+"tests/conftest.py" = ["B011", "RUF002", "RUF003", "PT022", "PT001"]
+"src/unifi_manager/logging_config.py" = ["RUF002"]
+"src/unifi_manager/cli/main.py" = ["RUF001", "RUF002"]
+"src/unifi_manager/cli/audit.py" = ["RUF001", "RUF002", "RUF003"]
+"src/unifi_manager/cli/_common.py" = ["RUF002"]
+"src/unifi_manager/clients/exceptions.py" = ["RUF002"]
+"src/unifi_manager/clients/base.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/clients/legacy.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/domain/device.py" = ["RUF002"]
+"src/unifi_manager/domain/restart_history.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/services/lock.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/services/audit.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/services/restart.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/integrations/telegram.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/integrations/zabbix.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/cli/notify.py" = ["RUF001", "RUF002", "RUF003"]
+"src/unifi_manager/cli/zabbix.py" = ["RUF001", "RUF002", "RUF003"]
+"src/unifi_manager/cli/config.py" = ["RUF001", "RUF002", "RUF003"]
+"src/unifi_manager/cli/login.py" = ["RUF001", "RUF002", "RUF003"]
+"src/unifi_manager/cli/legacy.py" = ["RUF001", "RUF002", "RUF003"]
+# Release tooling: Russian docs/comments use «с», «НЕ» etc. (intentional, not typos)
+"scripts/build-bundle.py" = ["RUF001", "RUF002", "RUF003"]
+
+# === Mypy ===
+[tool.mypy]
+python_version = "3.12"
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
+disallow_untyped_defs = false
+
+# === Pytest ===
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+markers = [
+    "fast: быстрые юнит-тесты (для pre-commit)",
+    "slow: медленные тесты",
+]
+
+[[tool.mypy.overrides]]
+module = "fasteners"
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src/unifi_manager"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

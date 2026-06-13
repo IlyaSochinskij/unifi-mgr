@@ -1,0 +1,53 @@
+unifi:
+  host: 192.0.2.1
+  port: 11443
+  site: site-1
+  site_id_uuid: bbffb94c-1234-5678-9abc-def012345678
+  verify_ssl: false
+
+telegram:
+  chat_id: "123456789"
+  enabled: true
+  parse_mode: MarkdownV2
+  rate_limit_per_hash_seconds: 30
+  rate_limit_total_per_minute: 5
+
+auto_restart:
+  max_restarts_per_run: 5
+  cooldown_minutes: 60
+  offline_threshold_min: 15
+  exclude_patterns: ["Spasatel", "test"]
+
+restart_profiles:
+  restaurant:
+    filter_names: [Restoran, "Restoran WIFI", "Rest Bar"]
+    exclude_names: ["Spasatel vagon"]
+    lost_contact_threshold: 3
+    window_hours: 24
+    max_restarts: 5
+    cooldown_minutes: 120
+
+thresholds:
+  critical_temp_c: 70
+  critical_poe_percent: 90
+  high_cu_percent: 50
+  port_error_delta_threshold: 50
+
+logging:
+  log_dir: /var/log/unifi-mgr
+  console_format: human
+  level: INFO
+
+paths:
+  reports_dir: /var/lib/unifi-mgr/reports
+  export_dir: /var/lib/unifi-mgr/exports
+
+audit_health_check:
+  enabled: true
+  dns_servers: ["8.8.8.8", "1.1.1.1"]
+  http_endpoints: ["https://www.cloudflare.com"]
+  timeout_seconds: 5
+
+maintenance:
+  default_mute_duration_minutes: 30
+  max_mute_duration_hours: 24

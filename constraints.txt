@@ -1,0 +1,21 @@
+# Pinned runtime dependency versions for reproducible production installs (D1/DP1).
+#
+# deploy.sh резолвит зависимости из PyPI на сервере; без пина идентичный бандл
+# со временем ставит разные деревья. Этот файл пинит ПРЯМЫЕ deps к проверенным
+# версиям. Передаётся в pip как `-c constraints.txt` (deploy.sh подхватывает его
+# из бандла автоматически, если файл присутствует).
+#
+# Регенерация после bump'а зависимостей:
+#   .venv/Scripts/python -c "import importlib.metadata as m; \
+#     [print(f'{p}=={m.version(p)}') for p in \
+#     ['typer','pydantic','pydantic-settings','requests','rich','pyyaml','fasteners']]"
+#
+# TODO (полная детерминированность): транзитивные зависимости пока не пиннятся —
+# для этого нужен lock с Linux platform tag (pip-compile/uv на сборочной машине).
+typer==0.25.1
+pydantic==2.13.4
+pydantic-settings==2.14.1
+requests==2.34.2
+rich==15.0.0
+PyYAML==6.0.3
+fasteners==0.20

@@ -1,0 +1,16 @@
+{
+  "aa:bb:cc:dd:ee:01": {
+    "name": "Restoran",
+    "last_restart": "2026-05-15T22:00:00",
+    "action": "restart",
+    "reason": "Many problems",
+    "count": 3
+  },
+  "aa:bb:cc:dd:ee:02": {
+    "name": "Office AP",
+    "last_restart": "2026-05-15T20:30:00",
+    "action": "poe_cycle",
+    "reason": "State=10 — PoE cycle",
+    "count": 1
+  }
+}

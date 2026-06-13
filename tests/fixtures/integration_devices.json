@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "id": "ap-uuid-1",
+      "macAddress": "aa:bb:cc:dd:ee:01",
+      "name": "Restoran",
+      "model": "U7IW",
+      "state": "ONLINE",
+      "ipAddress": "10.3.0.10"
+    },
+    {
+      "id": "ap-uuid-2",
+      "macAddress": "aa:bb:cc:dd:ee:02",
+      "name": "Office AP",
+      "model": "U7PG2",
+      "state": "OFFLINE"
+    }
+  ],
+  "offset": 0,
+  "limit": 100,
+  "count": 2,
+  "totalCount": 2
+}

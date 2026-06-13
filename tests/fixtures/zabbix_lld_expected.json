@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "{#NAME}": "Restoran",
+      "{#MAC}": "aa:bb:cc:dd:ee:01",
+      "{#MODEL}": "UAP-AC-IW",
+      "{#TYPE}": "uap",
+      "{#STATE}": "1"
+    },
+    {
+      "{#NAME}": "Core Switch",
+      "{#MAC}": "aa:bb:cc:dd:ee:99",
+      "{#MODEL}": "US-24-250W",
+      "{#TYPE}": "usw",
+      "{#STATE}": "1"
+    }
+  ]
+}

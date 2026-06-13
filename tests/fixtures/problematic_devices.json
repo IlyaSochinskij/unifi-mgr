@@ -1,0 +1,27 @@
+{
+  "meta": {"rc": "ok"},
+  "data": [
+    {
+      "_id": "ap-1", "mac": "aa:bb:cc:dd:ee:01", "name": "Restoran",
+      "model": "U7IW", "sysid": 58759, "type": "uap", "state": 10,
+      "last_seen": 1747397700,
+      "uplink": {"uplink_mac": "aa:bb:cc:dd:ee:99", "uplink_remote_port": 5}
+    },
+    {
+      "_id": "ap-2", "mac": "aa:bb:cc:dd:ee:02", "name": "Office AP",
+      "model": "U7PG2", "type": "uap", "state": 0,
+      "last_seen": 1747396800,
+      "uplink": {"uplink_mac": "aa:bb:cc:dd:ee:99", "uplink_remote_port": 6}
+    },
+    {
+      "_id": "ap-3", "mac": "aa:bb:cc:dd:ee:03", "name": "Spasatel vagon",
+      "model": "U7MP", "type": "uap", "state": 0,
+      "last_seen": 1747380000
+    },
+    {
+      "_id": "ap-4", "mac": "aa:bb:cc:dd:ee:04", "name": "Healthy AP",
+      "model": "U7IW", "type": "uap", "state": 1,
+      "last_seen": 1747397800
+    }
+  ]
+}

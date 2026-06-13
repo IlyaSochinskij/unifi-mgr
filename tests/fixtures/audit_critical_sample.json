@@ -1,0 +1,27 @@
+{
+  "meta": {"rc": "ok"},
+  "data": [
+    {
+      "_id": "ap-1", "mac": "aa:bb:cc:dd:ee:01", "name": "Restoran",
+      "model": "U7IW", "sysid": 58759, "type": "uap", "state": 1,
+      "last_seen": 1747397800
+    },
+    {
+      "_id": "ap-2", "mac": "aa:bb:cc:dd:ee:02", "name": "Lobby AP",
+      "model": "U7PG2", "type": "uap", "state": 0,
+      "last_seen": 1747390000
+    },
+    {
+      "_id": "sw-1", "mac": "aa:bb:cc:dd:ee:99", "name": "Hot Switch",
+      "model": "US-24-250W", "type": "usw", "state": 1,
+      "general_temperature": 85,
+      "port_table": []
+    },
+    {
+      "_id": "sw-2", "mac": "aa:bb:cc:dd:ee:98", "name": "Normal Switch",
+      "model": "US-24-250W", "type": "usw", "state": 1,
+      "general_temperature": 45,
+      "port_table": []
+    }
+  ]
+}

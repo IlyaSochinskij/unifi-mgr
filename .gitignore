@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.pre-commit-cache/
+
+# Secrets (всё что содержит реальные токены/пароли)
+.env
+.env.local
+
+# Старый config (используется legacy-скриптами, не коммитим новые правки)
+config.json
+
+# Артефакты старых скриптов
+*.log
+unifi_clients_*.csv
+unifi_clients_*.json
+unifi_audit_report.json
+ap_restart_history.json
+
+# IDE
+.vscode/
+.idea/
+*.sw?
+*~
+
+# Tool state directories (Claude Code worktrees, clone tools, etc.)
+.claude/
+.clone/
+
+# OS
+.DS_Store
+Thumbs.db

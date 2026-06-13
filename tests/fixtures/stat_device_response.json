@@ -1,0 +1,44 @@
+{
+  "meta": {"rc": "ok"},
+  "data": [
+    {
+      "_id": "device-uuid-1",
+      "mac": "aa:bb:cc:dd:ee:01",
+      "name": "Restoran",
+      "model": "U7IW",
+      "sysid": 58759,
+      "state": 1,
+      "type": "uap",
+      "last_seen": 1747397800,
+      "uplink": {
+        "uplink_mac": "aa:bb:cc:dd:ee:99",
+        "uplink_remote_port": 5
+      }
+    },
+    {
+      "_id": "device-uuid-2",
+      "mac": "aa:bb:cc:dd:ee:02",
+      "name": "Office AP 1",
+      "model": "U7PG2",
+      "sysid": 999999,
+      "state": 0,
+      "type": "uap",
+      "last_seen": 1747390000
+    },
+    {
+      "_id": "device-uuid-3",
+      "mac": "aa:bb:cc:dd:ee:99",
+      "name": "Core Switch",
+      "model": "US-24-250W",
+      "sysid": 12345,
+      "state": 1,
+      "type": "usw",
+      "last_seen": 1747397900,
+      "general_temperature": 45,
+      "port_table": [
+        {"port_idx": 1, "rx_errors": 0, "tx_errors": 0},
+        {"port_idx": 5, "rx_errors": 12, "tx_errors": 0}
+      ]
+    }
+  ]
+}

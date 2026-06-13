@@ -1,0 +1,79 @@
+# Пример конфигурации unifi-mgr.
+# Скопируйте в config.yaml и подгоните значения под свою среду.
+# Секреты (пароли, токены) ставьте в .env, не сюда.
+
+unifi:
+  host: 192.0.2.1
+  port: 11443
+  site: site-1
+  site_id_uuid: bbffb94c-1234-5678-9abc-def012345678  # UUID для Integration API
+  # TLS-проверка контроллера. Дефолт true (system CA). UniFi обычно отдаёт
+  # self-signed серт — НЕ ставьте false в проде (admin-креды уйдут по
+  # непроверённому TLS). Вместо этого запиньте серт контроллера:
+  #   openssl s_client -connect <host>:11443 -showcerts   # экспортировать в PEM
+  #   verify_ssl: /etc/unifi-mgr/controller-ca.pem
+  verify_ssl: true
+  # verify_ssl: false   # ⚠ last resort — проверка TLS отключена
+
+telegram:
+  chat_id: "123456789"
+  enabled: false              # Telegram заблокирован в РФ — выключен по умолчанию.
+                              # Код рабочий (см. integrations/telegram.py); включить если
+                              # доступен api.telegram.org (VPN/proxy) или дождаться Matrix-канала.
+  parse_mode: MarkdownV2
+
+auto_restart:
+  max_restarts_per_run: 5
+  cooldown_minutes: 60
+  offline_threshold_min: 15
+  exclude_patterns: ["lab", "test"]   # AP с такими именами auto-restart никогда не трогает
+
+restart_profiles:
+  # Профили для `restart profile <name> --apply`. Обязателен хотя бы один фильтр
+  # (filter_names или filter_patterns) — иначе профиль матчит весь парк.
+  office:
+    filter_names: ["Office-AP-1", "Office-AP-2"]
+    exclude_names: ["Lab-AP"]
+    lost_contact_threshold: 3
+    cooldown_minutes: 120
+  # warehouse:
+  #   filter_patterns: ["^WH-.*"]
+  #   lost_contact_threshold: 5
+
+thresholds:
+  critical_temp_c: 70
+  critical_poe_percent: 90
+  high_cu_percent: 50
+  # Фаза 7: 0 = отключено
+  port_error_delta_threshold: 50
+
+logging:
+  log_dir: /var/log/unifi-mgr
+  console_format: human
+  level: INFO
+
+paths:
+  reports_dir: /var/lib/unifi-mgr/reports
+  export_dir: /var/lib/unifi-mgr/exports
+
+# Аварийные kill-switch'и (D30) — остановка команд без правки cron.
+permissions:
+  cli:
+    restart:
+      execute: true          # false → все restart-команды → skipped_permissions
+      profile_apply: true     # false → отключает только `restart profile *`
+      device_apply: true      # false → отключает только `restart device --apply`
+    notify:
+      telegram_send: true     # false → notify/audit не шлют в Telegram (kill поверх telegram.enabled)
+
+# Фаза 7: контроллер health check
+audit_health_check:
+  enabled: true
+  dns_servers: ["8.8.8.8", "1.1.1.1"]
+  http_endpoints: ["https://www.cloudflare.com"]
+  timeout_seconds: 5
+
+# Фаза 7: maintenance mode
+maintenance:
+  default_mute_duration_minutes: 30
+  max_mute_duration_hours: 24
