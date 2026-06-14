@@ -48,6 +48,9 @@ ap_restart_history.json
 .claude/
 .clone/
 
+# Transient implementation plans (process-выхлоп; design specs в docs/specs/ — коммитим, планы — нет)
+docs/specs/*-implementation-plan.md
+
 # OS
 .DS_Store
 Thumbs.db
