@@ -1,1 +1,1 @@
-"""diagnostics layer — see docs/superpowers/specs/ for design."""
+"""diagnostics layer — see docs/ARCHITECTURE.md."""

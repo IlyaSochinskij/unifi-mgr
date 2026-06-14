@@ -107,7 +107,7 @@ unifi-mgr legacy run <script_name>          # wrapper для старых скр
 
 Зависимости: `clients → domain ← services ← cli`. Тесты с моками HTTP (`responses`) и временем (`freezegun`).
 
-Полный дизайн: [`docs/superpowers/specs/2026-05-16-unifi-manager-refactor-design.md`](docs/superpowers/specs/2026-05-16-unifi-manager-refactor-design.md)
+Архитектура: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · Дорожная карта: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
 ## Безопасность
 

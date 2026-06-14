@@ -1,1 +1,1 @@
-"""services layer — see docs/superpowers/specs/ for design."""
+"""services layer — see docs/ARCHITECTURE.md."""

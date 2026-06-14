@@ -1,1 +1,1 @@
-"""domain layer — see docs/superpowers/specs/ for design."""
+"""domain layer — see docs/ARCHITECTURE.md."""

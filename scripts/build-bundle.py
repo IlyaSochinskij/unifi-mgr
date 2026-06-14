@@ -78,8 +78,9 @@ Deployment bundle для развёртывания `unifi-mgr` на production 
 | `config.yaml.example` | Шаблон публичного конфига |
 | `.env.example` | Шаблон секретов |
 | `docs/INSTALL.md` | Установка на чистый сервер (step-by-step) |
-| `docs/superpowers/specs/` | Дизайн-документы |
-| `docs/superpowers/plans/` | Implementation plans (Phase 0-6 + 4.5 hardening) |
+| `docs/ARCHITECTURE.md` | Архитектура (current) |
+| `docs/ROADMAP.md` | Дорожная карта (сделано / в работе / отложено) |
+| `docs/specs/` | Design-спеки (NotifyService, Report module) |
 | `README.md`, `LICENSE` | Описание + лицензия |
 
 ---

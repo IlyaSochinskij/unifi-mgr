@@ -2,7 +2,7 @@
 
 **Дата:** 2026-05-18
 **Статус:** Draft
-**Связь с основным дизайном:** дополняет `2026-05-16-unifi-manager-refactor-design.md` как parallel track. Не блокирует Phase 3-6. Можно делать после Phase 4 (CLI готов) или после Phase 6 (стабилизация).
+**Связь с основным дизайном:** parallel track (Phase 4R) — см. [`../ARCHITECTURE.md`](../ARCHITECTURE.md) и [`../ROADMAP.md`](../ROADMAP.md). Не блокирует основной рефакторинг; нужен `NotifyService.get_alert_stats()` (под-проект 1 Track 3).
 **Целевая длительность:** 2-3 дня
 
 ---

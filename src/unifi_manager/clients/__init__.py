@@ -1,1 +1,1 @@
-"""clients layer — see docs/superpowers/specs/ for design."""
+"""clients layer — see docs/ARCHITECTURE.md."""

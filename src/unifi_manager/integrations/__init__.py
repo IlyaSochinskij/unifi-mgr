@@ -1,1 +1,1 @@
-"""integrations layer — see docs/superpowers/specs/ for design."""
+"""integrations layer — see docs/ARCHITECTURE.md."""
