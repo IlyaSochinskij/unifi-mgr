@@ -1,6 +1,6 @@
 # unifi-mgr
 
-Production-grade Python toolkit для управления UniFi сетью (~270+ устройств, production network deployment, 192.0.2.1).
+Production-grade Python toolkit для управления UniFi-сетью через Legacy и Integration API.
 
 Заменяет 15+ legacy скриптов единым типизированным пакетом с CLI, тестами и CI.
 
@@ -8,7 +8,7 @@ Production-grade Python toolkit для управления UniFi сетью (~2
 
 - **Audit** — критические проблемы, inventory snapshot, deep (оба API), MAC duplicates / spoofing, исторические тренды
 - **Auto-restart** проблемных AP с cooldown, priority sort, max-per-run, history persistence
-- **Profile-based restart** — заменяет 3 legacy `restart_restaurant_*.py` одним YAML-профилем
+- **Profile-based restart** — именованные YAML-профили (`restart profile <name>`)
 - **Targeted device restart** (single MAC, `restart` или `poe-cycle`)
 - **Telegram alerts** с dedup через `AlertHistory` + rate-limit (per-hash + per-minute)
 - **Zabbix LLD integration** для external check
@@ -29,9 +29,9 @@ pytest                         # 354 tests
 
 ### Production (Linux server)
 
-См. operator runbook: [`docs/runbooks/phase-5-cron-migration.md`](docs/runbooks/phase-5-cron-migration.md)
+Полный step-by-step (чистый сервер, least-privilege, scheduling): [`docs/INSTALL.md`](docs/INSTALL.md).
 
-Сборка wheel + production setup:
+Кратко — сборка wheel + production setup:
 ```bash
 python -m build --wheel        # → dist/unifi_mgr-*.whl
 # На сервере:
@@ -71,8 +71,8 @@ unifi-mgr audit trends --days 7             # исторические отчё�
 ```bash
 unifi-mgr restart auto                      # REAL execution (cron-friendly)
 unifi-mgr restart auto --dry-run            # preview
-unifi-mgr restart profile restaurant        # DRY-RUN (default)
-unifi-mgr restart profile restaurant --apply  # REAL
+unifi-mgr restart profile office            # DRY-RUN (default)
+unifi-mgr restart profile office --apply    # REAL
 unifi-mgr restart device --mac aa:bb:cc:dd:ee:ff --method poe-cycle --apply
 ```
 
@@ -119,7 +119,7 @@ unifi-mgr legacy run <script_name>          # wrapper для старых скр
 ## Development
 
 ```bash
-pytest --cov=unifi_manager --cov-fail-under=90
+pytest --cov=unifi_manager --cov-fail-under=80
 mypy --strict \
   src/unifi_manager/settings.py \
   src/unifi_manager/logging_config.py \
@@ -134,24 +134,10 @@ pre-commit install && pre-commit run --all-files
 
 CI (`.github/workflows/ci.yml`): lint + type + test + build.
 
-## Статус рефакторинга
+## Статус
 
-- [x] Phase 0 — Foundation (pyproject, scaffold, CI)
-- [x] Phase 1 — Core layers (clients, domain с SYSID_MAP, utils/time)
-- [x] Phase 2 — Services + integrations (audit, export, lock, notify, telegram, zabbix)
-- [x] Phase 3 — RestartService (auto + profile + device, D30 permissions)
-- [x] Phase 4 — CLI complete (все Typer commands wired)
-- [x] Phase 5 prep — deployment scripts + operator runbook
-- [ ] Phase 5 production — cron switch на сервере (см. runbook)
-- [ ] Phase 6 — Cleanup `_legacy/`, sync infra-зеркала
-- [ ] Phase 7 — Post-migration features (maintenance mode, controller health check) — deferred per D28
-
-## Tags
-
-```bash
-git tag -l 'phase-*'
-# phase-0-complete  phase-1-complete  phase-2-complete  phase-3-complete  phase-4-complete
-```
+Production-ready (v0.1.7): dual-API (Legacy + Integration), 354 теста, CI (lint + type + test + build).
+Релизы и deploy-архивы — в [GitHub Releases](../../releases).
 
 ## Лицензия
 

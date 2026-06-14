@@ -77,7 +77,7 @@ Deployment bundle для развёртывания `unifi-mgr` на production 
 | `scripts/observe.sh` | Daily observation helper (Phase 5) |
 | `config.yaml.example` | Шаблон публичного конфига |
 | `.env.example` | Шаблон секретов |
-| `docs/runbooks/` | Operator runbooks (полный + compressed timeline) |
+| `docs/INSTALL.md` | Установка на чистый сервер (step-by-step) |
 | `docs/superpowers/specs/` | Дизайн-документы |
 | `docs/superpowers/plans/` | Implementation plans (Phase 0-6 + 4.5 hardening) |
 | `README.md`, `LICENSE` | Описание + лицензия |
@@ -121,13 +121,10 @@ sudo -u unifi-mgr /opt/unifi-mgr/bin/unifi-mgr --config /etc/unifi-mgr/config.ya
 sudo -u unifi-mgr /opt/unifi-mgr/bin/unifi-mgr --config /etc/unifi-mgr/config.yaml audit status
 ```
 
-## Cron migration
+## Scheduling (cron)
 
-После успешного smoke test — переключение cron по runbook:
-
-**`docs/runbooks/phase-5-compressed-timeline.md`** — сжатый timeline (3-4 дня, рекомендуется при дедлайне).
-
-Или полный: **`docs/runbooks/phase-5-cron-migration.md`** (с 7-дневным наблюдением).
+Опционально — задания от сервис-юзера через `/etc/cron.d`. Пример и пошаговая
+установка с нуля: **`docs/INSTALL.md`** (раздел «Scheduling»).
 
 ---
 
