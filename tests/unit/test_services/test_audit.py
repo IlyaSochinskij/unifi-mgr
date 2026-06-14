@@ -257,6 +257,36 @@ def test_full_uses_both_apis(audit_settings: Settings) -> None:
 
 
 @pytest.mark.fast()
+def test_full_merges_mac_case_insensitively(audit_settings: Settings) -> None:
+    """Legacy (lower) и Integration (UPPER) MAC одного устройства → один merged dict.
+
+    Регрессия: без нормализации ключа дедупа устройство дублировалось в выводе.
+    """
+    from unifi_manager.services.audit import AuditService
+
+    legacy_client = Mock()
+    legacy_client.list_devices_raw.return_value = [
+        {"mac": "aa:bb:cc:dd:ee:01", "model": "U7IW", "type": "uap", "state": 1},
+    ]
+    integration_client = Mock()
+    integration_client.list_devices_raw.return_value = [
+        {"id": "x", "macAddress": "AA:BB:CC:DD:EE:01", "ipAddress": "10.3.0.10"},
+    ]
+
+    svc = AuditService(
+        legacy_client=legacy_client,
+        integration_client=integration_client,
+        settings=audit_settings,
+    )
+    report = svc.full()
+    assert len(report.devices) == 1
+    merged = report.devices[0]
+    # Legacy-поля сохранены, Integration-поля домержены
+    assert merged["mac"] == "aa:bb:cc:dd:ee:01"
+    assert merged.get("ipAddress") == "10.3.0.10"
+
+
+@pytest.mark.fast()
 def test_full_works_without_integration_client(audit_settings: Settings) -> None:
     """Если integration_client=None — работаем только с Legacy данными."""
     from unifi_manager.services.audit import AuditService

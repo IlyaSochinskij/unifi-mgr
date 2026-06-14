@@ -1,7 +1,8 @@
 """Root Typer app для unifi-mgr.
 
-В фазе 0 — только структура подкоманд + --version. Все команды кроме --version/--help
-возвращают exit 1 со stub-сообщением. Имплементация подкоманд — в фазах 1-7.
+Корневой `app` собирает все группы подкоманд (audit, restart, export, notify,
+zabbix, config, login, legacy) и обрабатывает глобальные опции --version /
+--config / --env-file до выбора подкоманды.
 """
 
 from __future__ import annotations
@@ -69,17 +70,6 @@ def main(
         os.environ["UNIFI_CONFIG_PATH"] = str(config)
     if env_file is not None:
         os.environ["UNIFI_ENV_FILE"] = str(env_file)
-
-
-def _stub(cmd: str) -> None:
-    """Помощник для stub-подкоманд фазы 0."""
-    typer.echo(f"[phase 0 stub] '{cmd}' not implemented yet — see refactor plan.")
-    raise typer.Exit(code=1)
-
-
-# === Stub подкоманд (фаза 0) ===
-# Заменяются настоящими в фазах 1-7. Сейчас существуют только чтобы --help работал
-# для всех групп.
 
 
 if __name__ == "__main__":

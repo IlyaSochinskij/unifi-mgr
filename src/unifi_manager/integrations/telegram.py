@@ -73,6 +73,7 @@ class TelegramRateLimiter:
                         "total": list(self._total_state),
                     },
                     indent=2,
+                    ensure_ascii=False,
                 ),
                 encoding="utf-8",
             )

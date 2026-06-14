@@ -260,23 +260,29 @@ class AuditService:
         legacy: list[dict[str, Any]],
         integration: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """Merge by mac: Legacy data + Integration data → один dict per device."""
+        """Merge by mac: Legacy data + Integration data → один dict per device.
+
+        Ключ дедупа нормализуется (lower): Legacy и Integration API могут отдавать
+        MAC в разном регистре, и без нормализации одно и то же устройство попало бы
+        в вывод дважды. Сами значения (mac / macAddress) не трогаем — только ключ.
+        """
         # Integration uses 'macAddress', Legacy uses 'mac'
         by_mac: dict[str, dict[str, Any]] = {}
         for d in legacy:
             mac = d.get("mac")
-            if mac:
-                by_mac[mac] = dict(d)
+            if isinstance(mac, str) and mac:
+                by_mac[mac.lower()] = dict(d)
         for d in integration:
             mac = d.get("macAddress") or d.get("mac")
-            if mac:
-                if mac in by_mac:
+            if isinstance(mac, str) and mac:
+                key = mac.lower()
+                if key in by_mac:
                     # Add integration-specific fields (ipAddress, etc.)
                     for k, v in d.items():
-                        if k not in by_mac[mac]:
-                            by_mac[mac][k] = v
+                        if k not in by_mac[key]:
+                            by_mac[key][k] = v
                 else:
-                    by_mac[mac] = dict(d)
+                    by_mac[key] = dict(d)
         return list(by_mac.values())
 
     def trends(self, *, days: int = 7) -> TrendsReport:
