@@ -120,6 +120,23 @@ def test_build_integration_client_returns_integration_client() -> None:
 
 
 @pytest.mark.fast()
+def test_build_notify_service_no_permission_branch(tmp_path: Path) -> None:
+    """build_notify_service не ветвится на permissions: даже с telegram_send=false и
+    enabled без токена строится без ValueError (нотифаер ленивый)."""
+    from unifi_manager.cli._common import build_notify_service
+    from unifi_manager.services.notify import NotifyService
+    from unifi_manager.settings import Settings, TelegramSettings, UnifiAuthSettings
+
+    s = Settings(
+        unifi=UnifiAuthSettings(host="1.2.3.4", port=11443, site="t"),
+        telegram=TelegramSettings(enabled=True, bot_token=None, chat_id="1"),
+    )
+    s.permissions.cli.notify.telegram_send = False
+    svc = build_notify_service(s)  # не должно бросить ValueError
+    assert isinstance(svc, NotifyService)
+
+
+@pytest.mark.fast()
 def test_setup_logging_from_cli_uses_verbose(tmp_path: Path) -> None:
     """setup_logging_from_cli(verbose=1) — DEBUG level."""
     import logging

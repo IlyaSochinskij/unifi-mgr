@@ -18,10 +18,12 @@ from typing import Any
 
 from unifi_manager.clients.integration import IntegrationClient
 from unifi_manager.clients.legacy import LegacyClient
+from unifi_manager.integrations.telegram import TelegramNotifier
 from unifi_manager.logging_config import (
     register_secrets_from_settings,
     setup_logging,
 )
+from unifi_manager.services.notify import AlertHistory, NotifyService
 from unifi_manager.settings import LoggingSettings, Settings, find_env_file
 
 
@@ -103,3 +105,20 @@ def build_integration_client(settings: Settings) -> IntegrationClient:
         UnifiAuthError: если api_key или site_id_uuid отсутствуют.
     """
     return IntegrationClient(settings.unifi)
+
+
+def build_notify_service(settings: Settings) -> NotifyService:
+    """NotifyService с ленивой фабрикой TelegramNotifier.
+
+    НЕ ветвится на permissions: AlertHistory дёшев и строится сразу, а TelegramNotifier
+    строится лениво внутри сервиса (и только если канал прошёл permission/enabled gate),
+    поэтому telegram_send=false или отсутствие токена тут не падают.
+    """
+    return NotifyService(
+        settings=settings,
+        history=AlertHistory(settings.paths.cache_dir / "alert_history.json"),
+        notifier_factory=lambda: TelegramNotifier(
+            settings=settings.telegram,
+            rate_limit_state=settings.paths.cache_dir / "telegram_throttle.json",
+        ),
+    )
