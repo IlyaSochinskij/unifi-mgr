@@ -26,6 +26,9 @@ def _isolate_runtime_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("UNIFI_LOGGING__LOG_DIR", str(tmp_path / "log"))
     monkeypatch.setenv("UNIFI_PATHS__REPORTS_DIR", str(tmp_path / "reports"))
     monkeypatch.setenv("UNIFI_PATHS__EXPORT_DIR", str(tmp_path / "exports"))
+    # cache_dir: NotifyService пишет alert_history.json + telegram_throttle.json сюда
+    # (дефолт ~/.cache). Промах CI не ловит (~/.cache writable) — изолируем явно.
+    monkeypatch.setenv("UNIFI_PATHS__CACHE_DIR", str(tmp_path / "cache"))
 
 
 _UNIFI_ENV_VARS = ("UNIFI_CONFIG_PATH", "UNIFI_ENV_FILE")
