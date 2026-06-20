@@ -210,62 +210,57 @@ def test_audit_trends_default_days(tmp_path: Path) -> None:
 
 
 @pytest.mark.fast
-def test_audit_critical_telegram_dedup(tmp_path: Path) -> None:
-    """--telegram → отправляет через TelegramNotifier + AlertHistory dedup."""
+def test_audit_critical_telegram_notifies_and_exits_by_issues(tmp_path: Path) -> None:
+    """--telegram → NotifyService.notify_audit_issues(issues); exit-код по issues."""
     from unifi_manager.cli.main import app
     from unifi_manager.services.audit import AuditIssue
+    from unifi_manager.services.notify import NotifyReport, NotifyStatus
 
     runner = CliRunner()
+    issues = [
+        AuditIssue(issue_type="offline", device_mac="aa:bb", device_name="x", severity="critical")
+    ]
     with (
         patch("unifi_manager.cli.audit.load_settings") as mock_settings,
         patch("unifi_manager.cli.audit.build_legacy_client"),
         patch("unifi_manager.cli.audit.AuditService") as mock_svc,
-        patch("unifi_manager.cli.audit.TelegramNotifier") as mock_notif,
-        patch("unifi_manager.cli.audit.AlertHistory") as mock_history,
+        patch("unifi_manager.cli.audit.build_notify_service") as bns,
     ):
         mock_settings.return_value = _test_settings(tmp_path)
-        mock_svc.return_value.critical.return_value = [
-            AuditIssue(
-                issue_type="offline", device_mac="aa:bb", device_name="x", severity="critical"
-            ),
-        ]
-        mock_history.return_value.is_new_alert.return_value = True
-        mock_notif.return_value.send_message.return_value = True
-
+        mock_svc.return_value.critical.return_value = issues
+        bns.return_value.notify_audit_issues.return_value = NotifyReport(
+            status=NotifyStatus.sent, sent=1
+        )
         result = runner.invoke(app, ["audit", "critical", "--telegram"])
 
-    assert result.exit_code == 1
-    mock_notif.return_value.send_message.assert_called()
+    assert result.exit_code == 1  # по issues
+    bns.return_value.notify_audit_issues.assert_called_once_with(issues)
 
 
 @pytest.mark.fast
-def test_audit_critical_telegram_suppressed_by_permissions(tmp_path: Path) -> None:
-    """permissions.cli.notify.telegram_send=false → skip telegram даже с --telegram."""
+def test_audit_critical_broken_telegram_exits_by_issues(tmp_path: Path) -> None:
+    """test #3 / acceptance #8: issues + broken Telegram (enabled, нет токена) → exit 1
+    ПОТОМУ ЧТО issues, а не из-за notify-краха; ValueError не утекает (нет traceback)."""
     from unifi_manager.cli.main import app
     from unifi_manager.services.audit import AuditIssue
 
-    runner = CliRunner()
     settings = _test_settings(tmp_path)
-    settings.permissions.cli.notify.telegram_send = False
-
+    settings.telegram = settings.telegram.model_copy(update={"enabled": True, "bot_token": None})
+    issues = [
+        AuditIssue(issue_type="offline", device_mac="aa:bb", device_name="x", severity="critical")
+    ]
+    runner = CliRunner()
     with (
         patch("unifi_manager.cli.audit.load_settings") as mock_settings,
         patch("unifi_manager.cli.audit.build_legacy_client"),
         patch("unifi_manager.cli.audit.AuditService") as mock_svc,
-        patch("unifi_manager.cli.audit.TelegramNotifier") as mock_notif,
     ):
         mock_settings.return_value = settings
-        mock_svc.return_value.critical.return_value = [
-            AuditIssue(
-                issue_type="offline", device_mac="aa:bb", device_name="x", severity="critical"
-            ),
-        ]
-
+        mock_svc.return_value.critical.return_value = issues
         result = runner.invoke(app, ["audit", "critical", "--telegram"])
 
     assert result.exit_code == 1
-    # TelegramNotifier должен НЕ быть создан
-    mock_notif.assert_not_called()
+    assert "Traceback" not in result.output
 
 
 @pytest.mark.fast

@@ -15,13 +15,12 @@ from unifi_manager.cli._common import (
     ApiChoice,
     build_integration_client,
     build_legacy_client,
+    build_notify_service,
     load_settings,
     output_json,
     setup_logging_from_cli,
 )
-from unifi_manager.integrations.telegram import TelegramNotifier
 from unifi_manager.services.audit import AuditService
-from unifi_manager.services.notify import AlertHistory
 from unifi_manager.utils.redact import redact_secrets
 
 _logger = logging.getLogger(__name__)
@@ -60,28 +59,18 @@ def audit_critical(
                     f"{issue.device_name} ({issue.device_mac})"
                 )
 
-    # Telegram уведомление с dedup
+    # Telegram уведомление — оркестрация в NotifyService (permission/dedup/format там).
     if telegram and issues:
-        if not settings.permissions.cli.notify.telegram_send:
-            _logger.info("Telegram suppressed by permissions.cli.notify.telegram_send=false")
-        else:
-            history = AlertHistory(state_file=settings.paths.cache_dir / "alert_history.json")
-            try:
-                notifier = TelegramNotifier(
-                    settings=settings.telegram,
-                    rate_limit_state=settings.paths.cache_dir / "telegram_throttle.json",
-                )
-            except ValueError as e:
-                typer.echo(f"Telegram unavailable: {e}", err=True)
-                raise typer.Exit(code=1 if issues else 0) from e
-            for issue in issues:
-                hash_key = f"{issue.issue_type}:{issue.device_mac}"
-                if history.is_new_alert(hash_key=hash_key):
-                    msg = f"⚠ {issue.severity}: {issue.device_name} — {issue.issue_type}"
-                    if notifier.send_message(msg, hash_key=hash_key):
-                        history.record_alert(hash_key=hash_key)
-            history.save()
+        report = build_notify_service(settings).notify_audit_issues(issues)
+        _logger.info(
+            "notify: %s (sent=%d dedup=%d failed=%d)",
+            report.status.value,
+            report.sent,
+            report.skipped_dedup,
+            report.failed,
+        )
 
+    # exit-код строго по audit issues, НЕ по notify (broken Telegram не маскирует issues).
     raise typer.Exit(code=1 if issues else 0)
 
 
