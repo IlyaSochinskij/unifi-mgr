@@ -94,6 +94,7 @@ fixture-parentheses = true
 "src/unifi_manager/domain/restart_history.py" = ["RUF002", "RUF003"]
 "src/unifi_manager/services/lock.py" = ["RUF002", "RUF003"]
 "src/unifi_manager/services/audit.py" = ["RUF002", "RUF003"]
+"src/unifi_manager/services/notify.py" = ["RUF001", "RUF002", "RUF003"]
 "src/unifi_manager/services/restart.py" = ["RUF002", "RUF003"]
 "src/unifi_manager/utils/atomic.py" = ["RUF002", "RUF003"]
 "src/unifi_manager/integrations/telegram.py" = ["RUF002", "RUF003"]

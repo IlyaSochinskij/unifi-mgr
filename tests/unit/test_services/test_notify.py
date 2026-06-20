@@ -158,3 +158,186 @@ def test_alert_history_handles_bad_timestamp_in_state(tmp_path: Path) -> None:
 
     history = AlertHistory(state_file=state_file)
     assert history.is_new_alert(hash_key="ap-down:aa:bb") is True
+
+
+# === NotifyService (Task 2 + 3) ===
+
+
+class _FakeNotifier:
+    """Соответствует Notifier-протоколу; пишет вызовы, возвращает заданный bool."""
+
+    def __init__(self, returns: bool = True) -> None:
+        self.returns = returns
+        self.calls: list[tuple[str, str]] = []
+
+    def send_message(self, text: str, *, hash_key: str) -> bool:
+        self.calls.append((text, hash_key))
+        return self.returns
+
+
+def _issue(issue_type: str, mac: str):  # type: ignore[no-untyped-def]
+    from unifi_manager.services.audit import AuditIssue
+
+    return AuditIssue(issue_type=issue_type, device_mac=mac, device_name=mac, severity="critical")
+
+
+def _make_settings(*, telegram_send: bool = True, enabled: bool = True):  # type: ignore[no-untyped-def]
+    from unifi_manager.settings import Settings, TelegramSettings, UnifiAuthSettings
+
+    s = Settings(
+        unifi=UnifiAuthSettings(host="h", port=11443, site="s"),
+        telegram=TelegramSettings(enabled=enabled, bot_token=None, chat_id="1"),
+    )
+    s.permissions.cli.notify.telegram_send = telegram_send
+    return s
+
+
+def _build(tmp_path, *, telegram_send=True, enabled=True, factory=None):  # type: ignore[no-untyped-def]
+    from unifi_manager.services.notify import AlertHistory, NotifyService
+
+    return NotifyService(
+        settings=_make_settings(telegram_send=telegram_send, enabled=enabled),
+        history=AlertHistory(tmp_path / "alerts.json"),
+        notifier_factory=factory or (lambda: _FakeNotifier()),
+    )
+
+
+@pytest.mark.fast()
+def test_notify_primitives_exist() -> None:
+    from unifi_manager.services.notify import AlertLevel, NotifyReport, NotifyStatus
+
+    assert [lvl.value for lvl in AlertLevel] == ["info", "warn", "crit"]
+    assert NotifyStatus.no_issues.value == "no_issues"
+    assert "enabled" not in [s.value for s in NotifyStatus]  # internal-only
+    rep = NotifyReport(status=NotifyStatus.sent, sent=1)
+    assert (rep.sent, rep.skipped_dedup, rep.failed) == (1, 0, 0)
+
+
+@pytest.mark.fast()
+def test_notify_no_issues(tmp_path: Path) -> None:
+    from unifi_manager.services.notify import NotifyStatus
+
+    assert _build(tmp_path).notify_audit_issues([]).status == NotifyStatus.no_issues
+
+
+@pytest.mark.fast()
+def test_notify_permission_off_never_builds_notifier(tmp_path: Path) -> None:
+    """§8 #1: telegram_send=false → нотифаер НЕ строится, skipped_permissions, без ValueError."""
+    from unifi_manager.services.notify import NotifyStatus
+
+    built: list[int] = []
+    svc = _build(tmp_path, telegram_send=False, factory=lambda: built.append(1) or _FakeNotifier())
+    rep = svc.notify_audit_issues([_issue("offline", "aa:bb")])
+    assert rep.status == NotifyStatus.skipped_permissions
+    assert built == []
+
+
+@pytest.mark.fast()
+def test_notify_disabled(tmp_path: Path) -> None:
+    from unifi_manager.services.notify import NotifyStatus
+
+    svc = _build(tmp_path, enabled=False)
+    assert (
+        svc.notify_audit_issues([_issue("offline", "aa:bb")]).status
+        == NotifyStatus.skipped_disabled
+    )
+
+
+@pytest.mark.fast()
+def test_notify_channel_unavailable_factory_once(tmp_path: Path) -> None:
+    """§8 #2/#8: factory кидает ValueError → channel_unavailable, дёрнута один раз, без утечки."""
+    from unifi_manager.services.notify import NotifyStatus
+
+    calls: list[int] = []
+
+    def factory():  # type: ignore[no-untyped-def]
+        calls.append(1)
+        raise ValueError("no token")
+
+    svc = _build(tmp_path, factory=factory)
+    rep = svc.notify_audit_issues([_issue("offline", "aa:bb"), _issue("offline", "cc:dd")])
+    assert rep.status == NotifyStatus.channel_unavailable
+    assert rep.status != NotifyStatus.failed
+    assert calls == [1]  # без per-issue retry
+
+
+@pytest.mark.fast()
+@freeze_time("2026-06-14 10:00:00")
+def test_notify_sent_factory_memoized(tmp_path: Path) -> None:
+    """§8 #5: несколько issues → factory вызвана ровно один раз; status sent."""
+    from unifi_manager.services.notify import NotifyStatus
+
+    calls: list[int] = []
+    fake = _FakeNotifier(returns=True)
+
+    def factory():  # type: ignore[no-untyped-def]
+        calls.append(1)
+        return fake
+
+    rep = _build(tmp_path, factory=factory).notify_audit_issues(
+        [_issue("offline", "aa:bb"), _issue("high_temperature", "cc:dd")]
+    )
+    assert rep.status == NotifyStatus.sent
+    assert rep.sent == 2
+    assert calls == [1]
+
+
+@pytest.mark.fast()
+@freeze_time("2026-06-14 10:00:00")
+def test_notify_failed(tmp_path: Path) -> None:
+    """§8 #7: send→False на каждый новый issue → failed."""
+    from unifi_manager.services.notify import NotifyStatus
+
+    rep = _build(tmp_path, factory=lambda: _FakeNotifier(returns=False)).notify_audit_issues(
+        [_issue("offline", "aa:bb")]
+    )
+    assert rep.status == NotifyStatus.failed
+    assert (rep.sent, rep.failed) == (0, 1)
+
+
+@pytest.mark.fast()
+@freeze_time("2026-06-14 10:00:00")
+def test_notify_all_deduped_completed(tmp_path: Path) -> None:
+    """§8 #6: всё задедуплено (real AlertHistory) → completed, sent=0."""
+    from unifi_manager.services.notify import AlertHistory, NotifyService, NotifyStatus
+
+    pre = AlertHistory(tmp_path / "alerts.json")
+    pre.record_alert(hash_key="offline:aa:bb")
+    pre.save()
+    svc = NotifyService(
+        settings=_make_settings(),
+        history=AlertHistory(tmp_path / "alerts.json"),
+        notifier_factory=lambda: _FakeNotifier(),
+    )
+    rep = svc.notify_audit_issues([_issue("offline", "aa:bb")])
+    assert rep.status == NotifyStatus.completed
+    assert (rep.sent, rep.skipped_dedup) == (0, 1)
+
+
+@pytest.mark.fast()
+@freeze_time("2026-06-14 10:00:00")
+def test_notify_record_only_after_success(tmp_path: Path) -> None:
+    """§8 #9: send False → record_alert НЕ вызван (alert остаётся новым)."""
+    from unifi_manager.services.notify import AlertHistory, NotifyService
+
+    hist = AlertHistory(tmp_path / "alerts.json")
+    svc = NotifyService(
+        settings=_make_settings(),
+        history=hist,
+        notifier_factory=lambda: _FakeNotifier(returns=False),
+    )
+    svc.notify_audit_issues([_issue("offline", "aa:bb")])
+    assert hist.is_new_alert(hash_key="offline:aa:bb") is True
+
+
+@pytest.mark.fast()
+@freeze_time("2026-06-14 10:00:00")
+def test_notify_send_and_test_status(tmp_path: Path) -> None:
+    """send/test → sent при успехе, failed при False; без completed."""
+    from unifi_manager.services.notify import AlertLevel, NotifyStatus
+
+    svc = _build(tmp_path)
+    assert svc.send("hi", level=AlertLevel.warn).status == NotifyStatus.sent
+    assert svc.test().status == NotifyStatus.sent
+    svc2 = _build(tmp_path, factory=lambda: _FakeNotifier(returns=False))
+    assert svc2.send("hi", level=AlertLevel.info).status == NotifyStatus.failed
