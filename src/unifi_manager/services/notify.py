@@ -15,6 +15,7 @@ import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from unifi_manager.utils.atomic import atomic_write_json
 from unifi_manager.utils.time import now_utc
 
 DEFAULT_COOLDOWN = timedelta(minutes=60)
@@ -80,12 +81,5 @@ class AlertHistory:
         self._state[hash_key] = now_utc().isoformat()
 
     def save(self) -> None:
-        """Сохранить state на диск (graceful — OSError только logged)."""
-        try:
-            self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            self.state_file.write_text(
-                json.dumps(self._state, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
-        except OSError as e:
-            _logger.error("Failed to save alert state %s: %s", self.state_file, e)
+        """Сохранить state на диск атомарно (graceful — OSError logged в helper)."""
+        atomic_write_json(self.state_file, self._state)

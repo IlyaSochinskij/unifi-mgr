@@ -6,16 +6,15 @@
 
 from __future__ import annotations
 
-import contextlib
 import json
 import logging
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
 
+from unifi_manager.utils.atomic import atomic_write_json
 from unifi_manager.utils.time import now_utc
 
 _logger = logging.getLogger(__name__)
@@ -148,21 +147,8 @@ class RestartHistory:
             )
             return
 
-        tmp_path = self.state_file.with_name(self.state_file.name + ".tmp")
-        try:
-            self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            payload = {
-                "version": CURRENT_VERSION,
-                "entries": {
-                    mac: entry.model_dump(mode="json") for mac, entry in self._entries.items()
-                },
-            }
-            tmp_path.write_text(
-                json.dumps(payload, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
-            os.replace(tmp_path, self.state_file)
-        except OSError as e:
-            _logger.error("Failed to save restart history %s: %s", self.state_file, e)
-            with contextlib.suppress(OSError):
-                tmp_path.unlink(missing_ok=True)
+        payload = {
+            "version": CURRENT_VERSION,
+            "entries": {mac: entry.model_dump(mode="json") for mac, entry in self._entries.items()},
+        }
+        atomic_write_json(self.state_file, payload)

@@ -18,6 +18,7 @@ from pathlib import Path
 import requests
 
 from unifi_manager.settings import TelegramSettings
+from unifi_manager.utils.atomic import atomic_write_json
 from unifi_manager.utils.time import now_utc
 
 _MARKDOWN_V2_RESERVED = set("_*[]()~`>#+-=|{}.!")
@@ -64,21 +65,10 @@ class TelegramRateLimiter:
             _logger.warning("Failed to load telegram throttle state: %s", e)
 
     def _save(self) -> None:
-        try:
-            self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            self.state_file.write_text(
-                json.dumps(
-                    {
-                        "hashes": self._hash_state,
-                        "total": list(self._total_state),
-                    },
-                    indent=2,
-                    ensure_ascii=False,
-                ),
-                encoding="utf-8",
-            )
-        except OSError as e:
-            _logger.error("Failed to save telegram throttle state %s: %s", self.state_file, e)
+        atomic_write_json(
+            self.state_file,
+            {"hashes": self._hash_state, "total": list(self._total_state)},
+        )
 
     def check_allowed(self, *, hash_key: str) -> bool:
         """True если отправка сейчас разрешена. Read-only: НЕ записывает state.
