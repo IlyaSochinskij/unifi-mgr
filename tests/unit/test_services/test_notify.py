@@ -341,3 +341,43 @@ def test_notify_send_and_test_status(tmp_path: Path) -> None:
     assert svc.test().status == NotifyStatus.sent
     svc2 = _build(tmp_path, factory=lambda: _FakeNotifier(returns=False))
     assert svc2.send("hi", level=AlertLevel.info).status == NotifyStatus.failed
+
+
+@pytest.mark.fast()
+@freeze_time("2026-06-14 10:00:00")
+def test_notify_partial_mixed_results(tmp_path: Path) -> None:
+    """Смешанный результат: один успех, один провал → partial."""
+    from unifi_manager.services.notify import NotifyStatus
+
+    class MixedNotifier:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, str]] = []
+            self._i = 0
+
+        def send_message(self, text: str, *, hash_key: str) -> bool:
+            self.calls.append((text, hash_key))
+            self._i += 1
+            return self._i == 1  # first succeeds, subsequent fail
+
+    notifier = MixedNotifier()
+
+    def factory() -> MixedNotifier:
+        return notifier
+
+    rep = _build(
+        tmp_path,
+        factory=factory,
+    ).notify_audit_issues([_issue("offline", "aa:bb"), _issue("offline", "cc:dd")])
+
+    assert rep.status == NotifyStatus.partial
+    assert (rep.sent, rep.failed) == (1, 1)
+
+
+@pytest.mark.fast()
+def test_format_issue_pinned(tmp_path: Path) -> None:
+    """Проверка жёстко зафиксированного формата сообщения для audit issue."""
+    notifier = _FakeNotifier()
+
+    _build(tmp_path, factory=lambda: notifier).notify_audit_issues([_issue("offline", "aa:bb")])
+
+    assert notifier.calls == [("⚠ critical: aa:bb — offline", "offline:aa:bb")]
