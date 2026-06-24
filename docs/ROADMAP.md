@@ -16,7 +16,7 @@ process-выхлоп удалён; здесь — только живая дор
 1. **NotifyService + Notifier-протокол** — ✅ **сделано**: оркестрация уведомлений в сервисе, единая точка kill-switch (SEC4), `--level` Enum (T5), сервис-уровневый dedup (T4), seam под Matrix. Spec: [specs/2026-06-14-notifyservice-design.md](specs/2026-06-14-notifyservice-design.md). Долги (RMW-гонка, MCP-мемоизация) — в контекст-доке п.2 / ниже.
 2. **Domain-нормализация** — ← **следующий**. Канонич. модель устройства, в которую маппятся оба API; секреты не входят by construction (структурно закрывает корень утечки, которую 0.1.7 закрыл band-aid'ом). Разблокирует Integration-expansion. **Контекст для старта:** [specs/2026-06-23-domain-normalization-context.md](specs/2026-06-23-domain-normalization-context.md).
 3. **Config-seam** — заменить мутацию `os.environ` явной передачей пути конфига; предусловие для MCP-режима (Phase 4M).
-4. **Quick-wins** — exit-коды для cron-мониторинга, state-классификатор (4/5/6/10 ≠ один «critical offline»), валидатор пустого include-фильтра профиля.
+4. **Quick-wins** — exit-коды для cron-мониторинга, state-классификатор (4/5/6/10 ≠ один «critical offline»), валидатор пустого include-фильтра профиля (A2), **profile event-fetch на масштабе** (~240 AP): per-AP guard (EH2 — сбой event-fetch одного AP не валит весь ран) + batch — один site-wide `/stat/event` + группировка по mac вместо N per-mac запросов под локом. NB: НЕ ThreadPool/async (контроллер лимитит, 429); batch требует корректной пагинации → завязано на CC1 (domain-норм). Шторм рестартов уже закрыт `max_restarts_per_run` cap'ом — это про латентность read-пути, не про safety.
 
 ## Остаток Phase 6 (cleanup)
 
